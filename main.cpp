@@ -37,28 +37,28 @@ struct Consume
 
 void coffeePlace()
 {
-	std::atomic<bool> alive{true};
-	std::mutex mtx; std::condition_variable cv;
-	CoffeeCap cap;
-
-	std::thread worker{[&alive, &mtx, &cv, &cap](){
-		Consume consume;
-	  while (alive)
-	  {
-		  std::unique_lock lk{mtx};
-		  cv.wait(lk, [&alive, &cap](){return !alive || !cap.empty();});
-		  consume << cap;
-		  cv.notify_one();
-	  } }};
+  std::atomic<bool> alive{true};
+  std::mutex mtx; std::condition_variable cv;
+  CoffeeCap cap;
+  
+  std::thread worker{[&alive, &mtx, &cv, &cap](){
+    Consume consume;
+    while (alive)
+    {
+      std::unique_lock lk{mtx};
+      cv.wait(lk, [&alive, &cap](){return !alive || !cap.empty();});
+      consume << cap;
+      cv.notify_one();
+    } }};
 
   std::thread barista{[&alive, &mtx, &cv, &cap](){
     while (alive)
-	  {
-	    std::unique_lock lk{mtx};
-	    cv.wait(lk, [&alive, &cap](){return !alive || cap.empty();});
-	    cap << 0xC0FFEE;
-	    cv.notify_one();
-		} }};
+    {
+      std::unique_lock lk{mtx};
+      cv.wait(lk, [&alive, &cap](){return !alive || cap.empty();});
+      cap << 0xC0FFEE;
+      cv.notify_one();
+    } }};
 
   [[maybe_unused]] int ch{ getchar() };
   alive = false;
