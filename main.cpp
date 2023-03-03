@@ -12,7 +12,7 @@ int main(char* /*argv*/, int /*argc*/)
 }
 
 
-struct CoffeeCap
+struct CoffeeCup
 {
   void operator << (size_t v)
   {
@@ -27,11 +27,16 @@ struct CoffeeCap
 
 struct Consume
 {
-  void operator << (CoffeeCap& cap)
+  void operator << (CoffeeCup& cup)
   {
-    std::cout << "nice " << std::hex << cap._val << std::endl;
-    cap << 0;
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    if (!cup.empty())
+    {
+      std::cout << "nice " << std::hex << cup._val << std::endl;
+      cup << 0;
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+    else
+      std::cout << "cmon man, not cool" << std::endl;
   }
 };
 
@@ -39,25 +44,25 @@ void coffeePlace()
 {
   std::atomic<bool> alive{true};
   std::mutex mtx; std::condition_variable cv;
-  CoffeeCap cap;
+  CoffeeCup cup;
   
-  std::thread worker{[&alive, &mtx, &cv, &cap](){
+  std::thread worker{[&alive, &mtx, &cv, &cup](){
     Consume consume;
     while (alive)
     {
       std::unique_lock lk{mtx};
-      cv.wait(lk, [&alive, &cap](){return !alive || !cap.empty();});
-      consume << cap;
+      cv.wait(lk, [&alive, &cup](){return !alive || !cup.empty();});
+      consume << cup;
       cv.notify_one();
     } }};
 
-  std::thread barista{[&alive, &mtx, &cv, &cap](){
+  std::thread barista{[&alive, &mtx, &cv, &cup](){
     while (alive)
     {
       std::unique_lock lk{mtx};
-      cv.wait(lk, [&alive, &cap](){return !alive || cap.empty();});
-      cap << 0xC0FFEE;
+      cup << 0xC0FFEE;
       cv.notify_one();
+      cv.wait(lk, [&alive, &cup](){return !alive || cup.empty();});
     } }};
 
   [[maybe_unused]] int ch{ getchar() };
