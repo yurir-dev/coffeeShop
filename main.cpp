@@ -36,7 +36,7 @@ struct Consume
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     else
-      std::cout << "cmon man, not cool" << std::endl;
+      std::cout << "c'mon man, not cool" << std::endl;
   }
 };
 
@@ -65,7 +65,8 @@ void coffeePlace()
       cv.wait(lk, [&alive, &cup](){return !alive || cup.empty();});
     } }};
 
-  [[maybe_unused]] int ch{ getchar() };
+  [[maybe_unused]] auto ch{ getchar() };
   alive = false;
+  cv.notify_all();
   worker.join(); barista.join();
 }
