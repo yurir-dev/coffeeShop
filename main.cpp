@@ -45,27 +45,27 @@ void coffeePlace()
   std::atomic<bool> alive{true};
   std::mutex mtx; std::condition_variable cv;
   CoffeeCup cup;
-  
-  std::thread worker{[&alive, &mtx, &cv, &cup](){
+
+  std::thread worker{[&alive, &mtx, &cv, &cup]() {
     Consume consume;
-    while (alive)
-    {
+    while (alive) {
       std::unique_lock lk{mtx};
       cv.wait(lk, [&alive, &cup](){return !alive || !cup.empty();});
       consume << cup;
       cv.notify_one();
-    } }};
+    }
+  }};
 
-  std::thread barista{[&alive, &mtx, &cv, &cup](){
-    while (alive)
-    {
+  std::thread barista{[&alive, &mtx, &cv, &cup]() {
+    while (alive) {
       std::unique_lock lk{mtx};
       cup << 0xC0FFEE;
       cv.notify_one();
       cv.wait(lk, [&alive, &cup](){return !alive || cup.empty();});
-    } }};
+    }
+  }};
 
-  [[maybe_unused]] auto ch{ getchar() };
+  [[maybe_unused]] auto ch{getchar()};
   alive = false;
   cv.notify_all();
   worker.join(); barista.join();
